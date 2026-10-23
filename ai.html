@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131b">
+  <title>Roblox AI Builder</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0e14;
+      --panel: #121722;
+      --panel-2: #191f2c;
+      --line: #2b3445;
+      --text: #edf2fa;
+      --muted: #9aa7bb;
+      --accent: #72e0b0;
+      --blue: #80aaff;
+      --danger: #ff8c8c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: radial-gradient(ellipse at top, #182438 0, var(--bg) 55%);
+      color: var(--text); font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 1200px; margin: auto; padding: 24px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; background: linear-gradient(135deg, #72e0b0, #80aaff); color: #081018; font-weight: 900; font-size: 20px; }
+    h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); letter-spacing: -.7px; }
+    .subtitle { color: var(--muted); margin-top: 3px; }
+    .pill { border: 1px solid var(--line); border-radius: 999px; color: var(--muted); padding: 7px 11px; white-space: nowrap; font-size: 12px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, .8fr); gap: 18px; }
+    .panel { background: rgba(18,23,34,.94); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .panel-head { padding: 17px 19px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-head h2 { margin: 0; font-size: 16px; }
+    .panel-body { padding: 19px; }
+    .chat-log { min-height: 280px; max-height: 430px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+    .bubble { padding: 12px 14px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 13px; max-width: 95%; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .bubble.user { align-self: flex-end; border-color: #365a50; background: #142a28; }
+    .bubble.assistant { align-self: flex-start; }
+    .bubble strong { display: block; color: var(--accent); font-size: 12px; margin-bottom: 5px; }
+    .composer { display: grid; gap: 10px; margin-top: 16px; }
+    textarea, input { width: 100%; color: var(--text); background: #0d111a; border: 1px solid var(--line); border-radius: 11px; padding: 12px 13px; outline: none; }
+    textarea:focus, input:focus { border-color: var(--blue); }
+    textarea { min-height: 105px; resize: vertical; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .btn { border: 1px solid var(--line); background: #20293a; color: var(--text); padding: 10px 14px; border-radius: 10px; font-weight: 650; }
+    .btn.primary { color: #07120e; background: var(--accent); border-color: transparent; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
+    .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #8995a8; }
+    .dot.ready { background: var(--accent); }
+    .settings { display: grid; gap: 14px; }
+    label { display: block; font-size: 13px; color: #c6d0df; margin-bottom: 6px; }
+    .small { font-size: 12px; color: var(--muted); }
+    .notice { padding: 12px; border: 1px solid #544b31; background: #282317; border-radius: 11px; color: #e7d5a0; font-size: 12px; }
+    .quick-prompts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .quick-prompts button { font-size: 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); }
+    .history { display: grid; gap: 8px; }
+    .history button { text-align: left; padding: 10px; border-radius: 10px; border: 1px solid var(--line); color: var(--text); background: #0d111a; overflow-wrap: anywhere; }
+    .history button.active { border-color: var(--accent); }
+    footer { color: var(--muted); text-align: center; font-size: 12px; padding: 22px 0 4px; }
+    @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } .app { padding: 14px; } header { align-items: flex-start; flex-direction: column; } .chat-log { min-height: 220px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <h1>Roblox AI Builder</h1>
+          <div class="subtitle">Describe it. Plan it. Build it in Studio.</div>
+        </div>
+      </div>
+      <div class="pill">WEB UI · n8n · ROBLOX STUDIO</div>
+    </header>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Builder chat</h2>
+          <div class="actions">
+            <button class="btn" id="newChat">New chat</button>
+            <button class="btn" id="clearChat">Clear</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chat-log" id="chatLog" aria-live="polite"></div>
+          <div class="composer">
+            <textarea id="prompt" placeholder="Example: Build a small house with a floor, four walls, a roof, a door and two windows."></textarea>
+            <div class="actions">
+              <button class="btn primary" id="sendBtn">Send to AI</button>
+              <button class="btn" id="savePrompt">Save prompt</button>
+            </div>
+          </div>
+          <div class="quick-prompts">
+            <button data-prompt="Build a small house with a floor, four walls, a roof, a door and two windows.">Small house</button>
+            <button data-prompt="Plan an obby with a start platform, 8 jumps, checkpoints, and a finish platform.">Obby plan</button>
+            <button data-prompt="Make a simple low-poly car using basic parts.">Low-poly car</button>
+          </div>
+          <p class="hint">This page sends prompts to your configured n8n webhook. A working workflow and Studio plugin are required for actual building.</p>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head"><h2>Connection settings</h2></div>
+        <div class="panel-body settings">
+          <div>
+            <label for="webhook">n8n production webhook URL</label>
+            <input id="webhook" type="url" placeholder="https://your-n8n-host/webhook/roblox-ai">
+            <div class="small">Saved only in this browser on this device.</div>
+          </div>
+          <div>
+            <label for="apiKey">Optional website access token</label>
+            <input id="apiKey" type="password" autocomplete="off" placeholder="Only if your backend requires it">
+            <div class="small">Avoid putting secret OpenAI or Roblox API keys here. This is not a secure secret vault.</div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="saveSettings">Save settings</button>
+            <button class="btn" id="testConnection">Test connection</button>
+          </div>
+          <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Not connected</span></div>
+          <div class="notice">Security: never commit API keys to GitHub. Store OpenAI and Roblox credentials in n8n credentials or server-side environment variables.</div>
+          <div>
+            <label for="assetKey">Roblox Toolbox / Creator Store key</label>
+            <input id="assetKey" type="password" autocomplete="off" placeholder="Do not paste it into this public page">
+            <div class="small">This field is a reminder only; it does not send or store the key. Configure the key securely on your n8n/backend server instead.</div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="clearSettings">Clear local settings</button>
+          </div>
+          <div>
+            <label>Recent chats</label>
+            <div class="history" id="history"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <footer>Personal project starter · Keep API credentials private · Website hosting does not run the AI backend</footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STORAGE = {
+      settings: "roblox-ai-builder-settings-v1",
+      chats: "roblox-ai-builder-chats-v1",
+      current: "roblox-ai-builder-current-v1"
+    };
+
+    let chats = readJSON(STORAGE.chats, []);
+    let currentId = localStorage.getItem(STORAGE.current);
+    let busy = false;
+
+    function readJSON(key, fallback) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || "null");
+        return value ?? fallback;
+      } catch { return fallback; }
+    }
+    function makeId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+    function currentChat() {
+      let chat = chats.find(c => c.id === currentId);
+      if (!chat) {
+        chat = { id: makeId(), title: "New chat", messages: [], updated: Date.now() };
+        chats.unshift(chat);
+        currentId = chat.id;
+        persistChats();
+      }
+      return chat;
+    }
+    function persistChats() {
+      localStorage.setItem(STORAGE.chats, JSON.stringify(chats));
+      localStorage.setItem(STORAGE.current, currentId || "");
+    }
+    function addMessage(role, content) {
+      const chat = currentChat();
+      chat.messages.push({ role, content, time: Date.now() });
+      chat.updated = Date.now();
+      if (chat.title === "New chat" && role === "user") {
+        chat.title = content.slice(0, 36) || "New chat";
+      }
+      persistChats();
+      renderChat();
+      renderHistory();
+    }
+    function renderChat() {
+      const log = $("chatLog");
+      log.replaceChildren();
+      const chat = currentChat();
+      if (!chat.messages.length) {
+        const empty = document.createElement("div");
+        empty.className = "bubble assistant";
+        empty.innerHTML = "<strong>AI BUILDER</strong>Hi! Describe what you want to create in Roblox Studio. I can send your request to n8n once you configure the webhook.";
+        log.appendChild(empty);
+      }
+      for (const message of chat.messages) {
+        const bubble = document.createElement("div");
+        bubble.className = "bubble " + (message.role === "user" ? "user" : "assistant");
+        const heading = document.createElement("strong");
+        heading.textContent = message.role === "user" ? "YOU" : "AI BUILDER";
+        const body = document.createElement("div");
+        body.textContent = message.content;
+        bubble.append(heading, body);
+        log.appendChild(bubble);
+      }
+      log.scrollTop = log.scrollHeight;
+    }
+    function renderHistory() {
+      const host = $("history");
+      host.replaceChildren();
+      const ordered = [...chats].sort((a,b) => b.updated - a.updated).slice(0, 8);
+      if (!ordered.length) {
+        host.textContent = "No saved chats yet.";
+        return;
+      }
+      for (const chat of ordered) {
+        const button = document.createElement("button");
+        button.textContent = chat.title || "New chat";
+        button.classList.toggle("active", chat.id === currentId);
+        button.addEventListener("click", () => {
+          currentId = chat.id;
+          persistChats();
+          renderChat();
+          renderHistory();
+        });
+        host.appendChild(button);
+      }
+    }
+    function loadSettings() {
+      const settings = readJSON(STORAGE.settings, {});
+      $("webhook").value = settings.webhook || "";
+      $("apiKey").value = settings.accessToken || "";
+      setStatus("Not connected");
+    }
+    function saveSettings() {
+      localStorage.setItem(STORAGE.settings, JSON.stringify({
+        webhook: $("webhook").value.trim(),
+        accessToken: $("apiKey").value
+      }));
+      setStatus("Settings saved in this browser");
+    }
+    function setStatus(text, good = false) {
+      $("statusText").textContent = text;
+      $("statusDot").classList.toggle("ready", good);
+    }
+    async function sendPrompt() {
+      const prompt = $("prompt").value.trim();
+      if (!prompt || busy) return;
+      const settings = readJSON(STORAGE.settings, {});
+      addMessage("user", prompt);
+      $("prompt").value = "";
+      if (!settings.webhook) {
+        addMessage("assistant", "Your message is saved, but no n8n webhook is configured yet. Paste your n8n production webhook URL in Connection settings and click Save settings.");
+        return;
+      }
+      busy = true;
+      $("sendBtn").disabled = true;
+      $("sendBtn").textContent = "Sending…";
+      setStatus("Sending request…");
+      try {
+        const headers = { "Content-Type": "application/json" };
+        if (settings.accessToken) headers["X-Access-Token"] = settings.accessToken;
+        const response = await fetch(settings.webhook, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ prompt, target: "Roblox Studio", source: "GitHub Pages" })
+        });
+        const text = await response.text();
+        if (!response.ok) throw new Error("HTTP " + response.status + (text ? ": " + text.slice(0, 180) : ""));
+        let result;
+        try { result = JSON.parse(text); } catch { result = { output: text }; }
+        const reply = result.output ?? result.reply ?? result.message ?? JSON.stringify(result, null, 2);
+        addMessage("assistant", String(reply));
+        setStatus("Connected · response received", true);
+      } catch (error) {
+        addMessage("assistant", "Couldn't reach n8n. Check the webhook URL, workflow activation, server availability, and CORS settings.\n\nDetails: " + error.message);
+        setStatus("Connection failed");
+      } finally {
+        busy = false;
+        $("sendBtn").disabled = false;
+        $("sendBtn").textContent = "Send to AI";
+      }
+    }
+
+    $("sendBtn").addEventListener("click", sendPrompt);
+    $("prompt").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendPrompt();
+      }
+    });
+    $("saveSettings").addEventListener("click", saveSettings);
+    $("testConnection").addEventListener("click", async () => {
+      const settings = readJSON(STORAGE.settings, {});
+      if (!settings.webhook) {
+        setStatus("Add a webhook URL first");
+        return;
+      }
+      setStatus("Testing…");
+      try {
+        const response = await fetch(settings.webhook, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: "Reply with: connection OK", target: "health check" })
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        setStatus("Webhook responded", true);
+      } catch (error) {
+        setStatus("Test failed: " + error.message);
+      }
+    });
+    $("newChat").addEventListener("click", () => {
+      const chat = { id: makeId(), title: "New chat", messages: [], updated: Date.now() };
+      chats.unshift(chat);
+      currentId = chat.id;
+      persistChats();
+      renderChat();
+      renderHistory();
+    });
+    $("clearChat").addEventListener("click", () => {
+      if (!confirm("Delete messages in this chat?")) return;
+      currentChat().messages = [];
+      currentChat().title = "New chat";
+      persistChats();
+      renderChat();
+      renderHistory();
+    });
+    $("savePrompt").addEventListener("click", () => {
+      const prompt = $("prompt").value.trim();
+      if (!prompt) return;
+      addMessage("assistant", "Saved prompt:\n" + prompt);
+    });
+    document.querySelectorAll("[data-prompt]").forEach(button => {
+      button.addEventListener("click", () => {
+        $("prompt").value = button.dataset.prompt;
+        $("prompt").focus();
+      });
+    });
+    $("clearSettings").addEventListener("click", () => {
+      if (!confirm("Clear this page's locally saved connection settings?")) return;
+      localStorage.removeItem(STORAGE.settings);
+      $("webhook").value = "";
+      $("apiKey").value = "";
+      $("assetKey").value = "";
+      setStatus("Settings cleared");
+    });
+
+    loadSettings();
+    currentChat();
+    renderChat();
+    renderHistory();
+  </script>
+</body>
+</html>
